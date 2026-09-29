@@ -108,7 +108,7 @@ public class MemoryManager {
     if (used) {
         memory[BITMAP_OFFSET + byteIndex] = (byte) ((memory[BITMAP_OFFSET + byteIndex] & 0xFF) | 1 << bitPosition); // si utilisé on met le bitmap à 1 (utilisé)
     } else {
-         memory[offset] = (byte) (memory[offset] & 0xFF) & ~(1 << bitPosition);// sinon on  le met à 0 (non utilisé)
+         memory[offset] = (byte) ((memory[offset] & 0xFF) & ~(1 << bitPosition));
     }
 
     return true;

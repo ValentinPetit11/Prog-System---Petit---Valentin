@@ -41,37 +41,42 @@ public class Utils {
              | ((long) (memory[offset + 7] & 0xFF));
     }
 
-    public static int writeString(
-            byte[] memory,
-            int offset,
-            String str,
-            int maxLength) {
+   public static int writeString(
+        byte[] memory,
+        int offset,
+        String str,
+        int maxLength) {
 
-        // TODO:
-       byte[] representationOctets = str.getBytes();
-        for (int i = 0; i < maxLength; i++) {
-            representationOctets[i] = memory[i];
-        }
-        if (maxLength < memory.length) {
-            for (int i = maxLength; i < memory.length; i++) {
-                memory[i] = 0;
-            }
+        byte[] representationOctets = str.getBytes();
+
+        int length = Math.min(representationOctets.length, maxLength);
+
+        // Écrit la chaîne dans memory
+        for (int i = 0; i < length; i++) {
+            memory[offset + i] = representationOctets[i];
         }
 
-        return maxLength;
+        // Complète le reste avec des zéros
+        for (int i = length; i < maxLength; i++) {
+            memory[offset + i] = 0;
+        }
+
+        return length;
     }
 
-    public static String readString(
-            byte[] memory,
-            int offset,
-            int maxLength) {
+   public static String readString(
+        byte[] memory,
+        int offset,
+        int maxLength) {
 
-        //for (int i = 0; memory[i] != 0 || i < maxLength; i++) {
-            
-        // }
+        int length = 0;
 
-        return "";
-    }
+        while (length < maxLength && memory[offset + length] != 0) {
+            length++;
+        }
+
+        return new String(memory, offset, length);
+}
 
 }
 
