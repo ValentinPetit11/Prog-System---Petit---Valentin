@@ -103,12 +103,12 @@ public class MemoryManager {
 
     int byteIndex = blockNumber / 8; // il y a 8 bytes donc pour trouver le byteIndex on divise le numéro du bloc par 8
     int bitPosition = blockNumber % 8; 
-    int offset = BITMAP_OFFSET + byteIndex; // On part de l'offset du bitmap et on ajoute le byteIndex
+    int offset = BITMAP_OFFSET + byteIndex; // On part de l'offset du bitmap et on ajoute l'index de la valeur qu'on veut modifier
 
     if (used) {
         memory[BITMAP_OFFSET + byteIndex] = (byte) ((memory[BITMAP_OFFSET + byteIndex] & 0xFF) | 1 << bitPosition); // si utilisé on met le bitmap à 1 (utilisé)
     } else {
-         memory[BITMAP_OFFSET + byteIndex] = (byte) ((memory[BITMAP_OFFSET + byteIndex] & 0xFF) | 0 << bitPosition); // sinon on  le met à 0 (non utilisé)
+         memory[offset] = (byte) (memory[offset] & 0xFF) & ~(1 << bitPosition);// sinon on  le met à 0 (non utilisé)
     }
 
     return true;
