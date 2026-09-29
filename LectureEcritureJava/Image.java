@@ -48,4 +48,22 @@ public class Image {
             System.err.println("Erreur lors de l'écriture du fichier : " + e.getMessage());
         }
     }
+
+    public static void read_bin(String filename) throws IOException {
+        return new FileInputStream(filename);
+    }
+    
+    public void write_bin(String filename) throws IOException {
+        
+        FileInputStream writer = new FileInputStream("Binaire.ppm");
+
+        for (int y = 0; y < this.getHeight(); y++) {
+            for (int x = 0; x < this.getWidth(); x++) {
+                byte[] tableau = new byte[3]; 
+            }
+        }
+        writer.write(texte.getBytes(tableau));
+
+        writer.close(); 
+    }
 }
