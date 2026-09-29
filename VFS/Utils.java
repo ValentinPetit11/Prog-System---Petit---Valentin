@@ -1,54 +1,44 @@
 public class Utils {
 
-    public static int writeInt(byte[] memory, int offset, int value) {
-        memory[offset] = value >>> 24;
-        memory[offset + 1] = value >>> 16;
-        memory[offset + 2] = value >>> 8;
-        memory[offset + 3] = value;
-        return 4;
-    }
-
-    public static int readInt(byte[] memory, int offset) {
-        return ((memory[offset]) << 24)
-             | ((memory[offset + 1]) << 16)
-             | ((memory[offset + 2]) << 8)
-             |  (memory[offset + 3]);
-    }
-
-    public static int writeShort(byte[] memory, int offset, short value) {
-        memory[offset] = value >>> 8;
-        memory[offset + 1] = value;
-        return 2;
+    public static void writeInt(byte[] memory, int offset, int value) {
+        memory[offset]     = (byte) (value >>> 24);
+        memory[offset + 1] = (byte) (value >>> 16);
+        memory[offset + 2] = (byte) (value >>> 8);
+        memory[offset + 3] = (byte) value;
     }
 
     public static short readShort(byte[] memory, int offset) {
-        memory[offset + 2] = value << 8;
-        memory[offset + 3] = value;
-        return 2;
+        return (short) (
+            ((memory[offset] & 0xFF) << 8) |
+            (memory[offset + 1] & 0xFF)
+        );
     }
 
-    public static int writeLong(byte[] memory, int offset, long value) {
-        memory[offset] = value >>> 56;
-        memory[offset + 1] = value >>> 48;
-        memory[offset + 2] = value >>> 50;
-        memory[offset + 3] = value >>> 32;
-        memory[offset + 4] = value >>> 24;
-        memory[offset + 5] = value >>> 16;
-        memory[offset + 6] = value >>> 8;
-        memory[offset + 7] = value;
-    return 8;
-}
+    public static void writeShort(byte[] memory, int offset, short value) {
+        memory[offset]     = (byte) (value >>> 8);
+        memory[offset + 1] = (byte) value;
+    }
+
+    public static void writeLong(byte[] memory, int offset, long value) {
+        memory[offset]     = (byte) (value >>> 56);
+        memory[offset + 1] = (byte) (value >>> 48);
+        memory[offset + 2] = (byte) (value >>> 40);
+        memory[offset + 3] = (byte) (value >>> 32);
+        memory[offset + 4] = (byte) (value >>> 24);
+        memory[offset + 5] = (byte) (value >>> 16);
+        memory[offset + 6] = (byte) (value >>> 8);
+        memory[offset + 7] = (byte) value;
+    }
 
     public static long readLong(byte[] memory, int offset) {
-       memory[offset] = value << 56;
-       memory[offset + 1] = value << 48;
-       memory[offset + 2] = value << 40;
-       memory[offset + 3] = value << 32;
-       memory[offset + 4] = value << 24;
-       memory[offset + 5] = value << 16;
-       memory[offset + 6] = value << 8;
-       memory[offset + 7] = value;
-        return 0L;
+        return ((long) (memory[offset] & 0xFF) << 56)
+             | ((long) (memory[offset + 1] & 0xFF) << 48)
+             | ((long) (memory[offset + 2] & 0xFF) << 40)
+             | ((long) (memory[offset + 3] & 0xFF) << 32)
+             | ((long) (memory[offset + 4] & 0xFF) << 24)
+             | ((long) (memory[offset + 5] & 0xFF) << 16)
+             | ((long) (memory[offset + 6] & 0xFF) << 8)
+             | ((long) (memory[offset + 7] & 0xFF));
     }
 
     public static int writeString(
@@ -76,11 +66,14 @@ public class Utils {
             int offset,
             int maxLength) {
 
-        for (int i = 0; memory[i] != 0 || i < maxLength; i++) {
+        //for (int i = 0; memory[i] != 0 || i < maxLength; i++) {
             
-        }
+        // }
 
         return "";
     }
 
-    }
+}
+
+
+    
