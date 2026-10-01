@@ -57,54 +57,12 @@ public class VirtualFileSystem {
     public MemoryManager getMemoryManager() {
         return memoryManager;
     }
-	
-	public static void testStep8() {
-		System.out.println("=== TEST ÉTAPE 8 : Création Fichier ===");
 
-		VirtualFileSystem vfs =
-				new VirtualFileSystem();
+        public boolean writeFile(
+                int inodeNum,
+                byte[] data) {
 
-		boolean ok1 =
-				vfs.createFile("/", "fichier1.txt");
-
-		boolean ok2 =
-				vfs.createFile("/", "fichier2.txt");
-
-		assert ok1 :
-				"La création du premier fichier a échoué";
-
-		assert ok2 :
-				"La création du second fichier a échoué";
-
-		MemoryManager mm =
-				vfs.getMemoryManager();
-
-		Inode inode0 =
-				new Inode(mm, 0);
-
-		Inode inode1 =
-				new Inode(mm, 1);
-
-		assert inode0.getFileType() == 1 :
-				"L'inode 0 doit représenter un fichier";
-
-		assert inode1.getFileType() == 1 :
-				"L'inode 1 doit représenter un fichier";
-
-		assert inode0.getFileSize() == 0 :
-				"Le premier fichier doit être vide";
-
-		assert inode1.getFileSize() == 0 :
-				"Le second fichier doit être vide";
-
-		System.out.println("[OK] Étape 8 validée !");
-	}
-
-   public boolean writeFile(
-        int inodeNum,
-        byte[] data) {
-
-        int blocksNeeded =
+        int blocksNeeded = // nombre minimal de blocs nécessaires
                 (data.length
                 + MemoryManager.BLOCK_SIZE - 1)
                 / MemoryManager.BLOCK_SIZE;
@@ -117,114 +75,200 @@ public class VirtualFileSystem {
                 new int[Inode.DIRECT_POINTERS];
 
         for (int i = 0; i < blocksNeeded; i++) {
-                int blockNumber = memoryManager.allocateBlock();
-
-                if (blockNumber == -1) {
-                for (int j = 0; j < i; j++) {
-                        memoryManager.setBlockUsed(
-                                blockPointers[j],
-                                false
-                        );
+                        blockPointers[i] = memoryManager.allocateBlock();
                 }
 
-                return false;
-                }
+        byte[] memory =
+                memoryManager.getFilesystemMemory();
 
-                blockPointers[i] = blockNumber;
-        }
-
-        byte[] memory = memoryManager.getFilesystemMemory();
-
-        int bytesRemaining = data.length;
+        int bytesRemaining =
+                data.length;
 
         int dataSrcOffset = 0;
+                
+                int quantiteACopier;
+                
+                int numeroBlock;
+                
+                
 
         for (int i = 0; i < blocksNeeded; i++) {
+                        quantiteACopier = Math.min(bytesRemaining,MemoryManager.BLOCK_SIZE);
+                        numeroBlock = memoryManager.DATA_OFFSET + quantiteACopier;
+                        
+                        int blockOffset =
+                        MemoryManager.DATA_OFFSET
+                        + blockPointers[i] * MemoryManager.BLOCK_SIZE;
 
-                int blockNumber = blockPointers[i];
+                System.arraycopy(
+                        data,
+                        dataSrcOffset,
+                        memory,
+                        blockOffset,
+                        quantiteACopier);
 
-                int blockOffset = blockNumber * MemoryManager.BLOCK_SIZE;
-
-                int bytesACopier =
-                        Math.min(
-                                bytesRemaining,
-                                MemoryManager.BLOCK_SIZE
-                        );
-
-                for (int j = 0; j < bytesACopier; j++) {
-                memory[blockOffset + j] =
-                        data[dataSrcOffset + j];
+                dataSrcOffset += quantiteACopier;
+                bytesRemaining -= quantiteACopier;
                 }
+                
+                Inode inode =
+                                new Inode(memoryManager, inodeNum);
 
-                dataSrcOffset += bytesACopier;
-                bytesRemaining -= bytesACopier;
-        }
+                int fileType =
+                                inode.getFileType();
 
-        
-        Inode inode = new Inode(memoryManager, inodeNum);
+                long creationTime =
+                        Utils.readLong(
+                                 memory,
+                                inode.getInodeOffset() + 12);
 
-        int fileSize = data.length;
+                long modificationTime =
+                        Utils.readLong(
+                                        memory,
+                                        inode.getInodeOffset() + 20);
 
-        int[] oldPointers = inode.getDirectPointers();
+                int indirectPointer =
+                        Utils.readInt(
+                                memory,
+                                inode.getInodeOffset() + 68);
 
-        long currentTime = System.currentTimeMillis();
+                 short permissions =
+                        Utils.readShort(
+                                memory,
+                                inode.getInodeOffset() + 72);
 
-        inode.writeToMemory(
-                inode.getFileType(),
-                fileSize,
-                currentTime,
-                currentTime,
-                blockPointers,
-                0,
-                (short) 0644,
-                1
-        );
+                int linkCount =
+                        Utils.readInt(
+                                memory,
+                                inode.getInodeOffset() + 74);
+
+                inode.writeToMemory(
+                        fileType,
+                        data.length,
+                        creationTime,
+                        modificationTime,
+                        blockPointers,
+                        indirectPointer,
+                        permissions,
+                        linkCount)
+                ;
 
         return true;
         }
         public byte[] readFile(int inodeNum) {
 
+                if (inodeNum < 0 ||
+                        inodeNum >= MemoryManager.MAX_INODES) {
+                        return null;
+                }
+
                 Inode inode =
                         new Inode(memoryManager, inodeNum);
 
-                int fileSize = inode.getFileSize();
+                int fileSize =
+                        inode.getFileSize();
 
-                if (fileSize == 0) {
+                if (fileSize <= 0) {
                         return new byte[0];
                 }
 
-                byte[] fileData = new byte[fileSize];
+                int[] blockPointers =
+                        inode.getDirectPointers();
 
-                byte[] memory = memoryManager.getFilesystemMemory();
+                byte[] memory =
+                        memoryManager.getFilesystemMemory();
 
-                int[] blockPointers = inode.getDirectPointers();
+                byte[] data =
+                        new byte[fileSize];
 
                 int bytesRemaining = fileSize;
+                int dataDstOffset = 0;
 
-                int fileDataOffset = 0;
+                for (int i = 0;
+                        i < Inode.DIRECT_POINTERS &&
+                        bytesRemaining > 0;
+                        i++) {
 
-                for (int i = 0; i < Inode.DIRECT_POINTERS && bytesRemaining > 0; i++) {
+                        int blockNumber =
+                                blockPointers[i];
 
-                        int blockNumber = blockPointers[i];
-
-                        if (blockNumber == 0) {
-                                break;
+                        if (blockNumber < 129) {
+                        return null;
                         }
 
-                        int blockOffset = blockNumber * MemoryManager.BLOCK_SIZE;
+                        int bytesToCopy =
+                                Math.min(
+                                        bytesRemaining,
+                                        MemoryManager.BLOCK_SIZE);
 
-                        int bytesACopier = Math.min(bytesRemaining, MemoryManager.BLOCK_SIZE);
+                        int blockOffset =
+                                MemoryManager.DATA_OFFSET
+                                + blockNumber * MemoryManager.BLOCK_SIZE;
 
-                        for (int j = 0; j < bytesToCopy; j++) {
-                                fileData[fileDataOffset + j] = memory[blockOffset + j];
-                        }
+                        System.arraycopy(
+                                memory,
+                                blockOffset,
+                                data,
+                                dataDstOffset,
+                                bytesToCopy);
 
-                        fileDataOffset += bytesACopier;
-                        bytesRemaining -= bytesACopier;
+                        dataDstOffset += bytesToCopy;
+                        bytesRemaining -= bytesToCopy;
                 }
 
-                return fileData;
+                if (bytesRemaining != 0) {
+                        return null;
+                }
+
+                return data;
         }
+
+
+        public boolean deleteFile(int inodeNum) {
+                if (inodeNum < 0 ||
+                        inodeNum >= MemoryManager.MAX_INODES) {
+                        return false;
+                }
+
+                Inode inode =
+                        new Inode(memoryManager, inodeNum);
+
+                int[] blockPointers =
+                        inode.getDirectPointers();
+
+                for (int i = 0;
+                        i < Inode.DIRECT_POINTERS;
+                        i++) {
+
+                        int blockNumber =
+                                blockPointers[i];
+
+                       
+                        if (blockNumber > 0) {
+                        memoryManager.setBlockUsed(
+                                blockNumber,
+                                false);
+                        }
+                }
+
+               
+                byte[] memory =
+                        memoryManager.getFilesystemMemory();
+
+                int inodeOffset =
+                        inode.getInodeOffset();
+
+                for (int i = 0;
+                        i < Inode.INODE_SIZE;
+                        i++) {
+
+                        memory[inodeOffset + i] = 0;
+                }
+
+                return true;
+        }
+
+        
 }
 
 
