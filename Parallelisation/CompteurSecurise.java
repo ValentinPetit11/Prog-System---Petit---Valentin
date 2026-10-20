@@ -21,10 +21,6 @@ public class CompteurSecurise {
                     compteurGlobal++;
                 }
             }
-
-            System.out.println(
-                nom + " terminé. Compteur vu : " + getCompteur()
-            );
         }
     }
 
