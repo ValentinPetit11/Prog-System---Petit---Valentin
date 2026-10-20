@@ -19,7 +19,6 @@ public class CalculParallele {
 			try {
 				threads[i].join();
 			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
 				return;
 			}
 

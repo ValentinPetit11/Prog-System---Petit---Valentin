@@ -21,21 +21,13 @@ public class CalculSequentiel {
             try {
                 thread.join(); // Attendre avant de passer au suivant
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 return;
             }
 
             sommeTotal += thread.getResultat();
 
-            System.out.println(
-                "Traitement de " + DONNEES[i]
-                + " terminé : " + thread.getResultat()
-            );
         }
 
         long fin = System.nanoTime();
-
-        System.out.println("Somme totale : " + sommeTotal);
-        System.out.println("Temps : " + (fin - debut) / 1_000_000.0 + " ms");
     }
 }
