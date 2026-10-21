@@ -2,7 +2,6 @@ public class CompteurSecurise {
 
     private static int compteurGlobal = 0;
 
-    // Verrou partagé par toutes les instances et tous les threads
     private static final Object verrou = new Object();
 
     static class Incrementeur implements Runnable {

@@ -14,7 +14,6 @@ public class CalculParallele {
 			threads[i].start();
 		}
 
-	// 2. Attendre la fin de chaque thread et récupérer les résultats
 		for (int i = 0; i < DONNEES.length; i++) {
 			try {
 				threads[i].join();
